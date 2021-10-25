@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { hashPassword } from './../helpers/auth.service';
+import { hashPassword } from '../helpers/auth.service';
 
 export interface UserInput {
     email: string;
@@ -53,6 +53,6 @@ userSchema.methods.comparePassword = async function(candidatePassword: string):P
     }
 }
 
-const UserModel = mongoose.model("User", userSchema)
+const UserModel = mongoose.model<UserDocument>("User", userSchema)
 
 export default UserModel;

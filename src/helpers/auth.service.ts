@@ -1,29 +1,50 @@
 import jwt, { Secret } from "jsonwebtoken";
-import * as bcrypt from 'bcrypt';
-import config from "config"
-const secret: Secret = `${process.env.JWT_KEY}`;
-const refreshKey = `${process.env.REFRESH_TOKEN_KEY}`;
+import * as bcrypt from "bcrypt";
+import config from "config";
 
-    export const  generateJwt = async (payload: string | object) => {
-    const token = await jwt.sign({ payload } , secret, { expiresIn: "1d" });
-    return token;
-  }
-  
-  // export const refreshToken = async (payload: string | object , secret = refreshKey) => {
-  //   const token = await jwt.sign({ payload }, secret, { expiresIn: "7d" });
-  //   return token;
-  // }
+const privateKey = config.get<string>("privateKey");
+const publicKey = config.get<string>("publicKey");
 
-  export const hashPassword = async (password: string) => {
-    const hashPass = await bcrypt.hash(password, bcrypt.genSaltSync(config.get<number>('saltWorkFactor')));
-    return hashPass;
-  }
-
-  export const passwordCompare = async(hashPassword: string, password: string) => {
-    const compareHash = bcrypt.compareSync(password, hashPassword);
-    return compareHash;
-  }
-
- export const verifyToken = (token: string) => {
-    return jwt.verify(token, secret)
+export function signJwt(
+  payload: Object,
+  options?: jwt.SignOptions | undefined
+) {
+  return jwt.sign(payload, privateKey, {
+    ...(options && options),
+    algorithm: "RS256",
+  });
 }
+
+export function verifyJwt(token: string) {
+  try {
+    const decoded =  jwt.verify(token, publicKey);
+    return {
+      valid: true,
+      expired: false,
+      decoded
+    }
+    
+  } catch (error: any) {
+    return {
+      valid: false,
+      expired: error.message === 'jwt expired',
+      decoded: null
+    }
+  }
+};
+
+export const hashPassword = async (password: string) => {
+  const hashPass = await bcrypt.hash(
+    password,
+    bcrypt.genSaltSync(config.get<number>("saltWorkFactor"))
+  );
+  return hashPass;
+};
+
+export const passwordCompare = async (
+  hashPassword: string,
+  password: string
+) => {
+  const compareHash = bcrypt.compareSync(password, hashPassword);
+  return compareHash;
+};
